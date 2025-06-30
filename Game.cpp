@@ -23,7 +23,7 @@ Game::Game() :
         }
         else {
             fontLoaded = true;
-        }
+        }   
     }
     else {
         fontLoaded = true;
@@ -59,11 +59,11 @@ Game::Game() :
 
 // Game.cpp
 bool Game::loadMusic() {
-    if (!bgMusic.openFromFile("resources/music.ogg")) {  // 推荐使用OGG格式
+    if (!bgMusic.openFromFile("五子棋背景音乐.ogg")) {  // 推荐使用OGG格式
         std::cerr << "无法加载背景音乐文件！" << std::endl;
         return false;
     }
-    //bgMusic.setLoop(true);      // 设置循环播放
+    bgMusic.setLooping(true);      // 设置循环播放
     bgMusic.setVolume(30.f);    // 音量设置(0-100)
     return true;
 }
@@ -147,7 +147,7 @@ void Game::processEvents() {
         if (event->is<sf::Event::Closed>()) {
             window.close();
         }
-        if (gameOver && sf::Keyboard::isKeyPressed(sf::Keyboard::Scan::M)) {
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scan::M)) {
             if (isMusicPaused) {
                 bgMusic.play();  // 从暂停位置继续
             }
