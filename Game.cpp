@@ -1,68 +1,140 @@
-#include "Game.h"
-#include <stdexcept>
-// ÔÚ°üº¬ SFML Í·ÎÄ¼şÖ®Ç°¶¨Òå´Ëºê
-//#define SFML_STATIC
-#include <SFML/Graphics.hpp>
+ï»¿#include "Game.h"
 #include <iostream>
-// ×¢Òâ£ºÈ·±£ Game ÀàÖĞÒÑÉùÃ÷³ÉÔ±±äÁ¿£º
-// sf::RenderWindow window;
-// sf::Font font;
-// sf::Text statusText;  // ×÷Îª³ÉÔ±±äÁ¿£¬¶ø·Ç¾Ö²¿±äÁ¿
 
 Game::Game() :
-    // ³õÊ¼»¯´°¿Ú£¨³ß´ç¡¢±êÌâ¡¢ÑùÊ½£©
     window(
         sf::VideoMode(
             { BOARD_SIZE * CELL_SIZE + 2 * WINDOW_MARGIN,
-              BOARD_SIZE * CELL_SIZE + 2 * WINDOW_MARGIN }
+            BOARD_SIZE * CELL_SIZE + 2 * WINDOW_MARGIN }
         ),
-        L"Îå×ÓÆå - SFML 3.0",
+        L"äº”å­æ£‹",
         sf::Style::Default
     ),
-    // ³õÊ¼»¯ÎÄ±¾¶ÔÏó£¨°ó¶¨×ÖÌå£¬SFML 3.0 ÒªÇó£©
-    statusText(font)
+    currentState(GameState::MainMenu),
+    currentPlayer(1),
+    gameOver(false),
+    winner(0)
 {
-    // 1. ¼ÓÔØ×ÖÌå£¨ÓÅÏÈ×Ô¶¨Òå×ÖÌå£¬Ê§°ÜÔò³¢ÊÔ±¸Ñ¡Â·¾¶£©
-    bool fontLoaded = false;
-    // ³¢ÊÔµ±Ç°Ä¿Â¼µÄ×ÖÌåÎÄ¼ş
-    if (font.openFromFile("simhei.ttf")) {
-        fontLoaded = true;
-        std::cout << "µ±Ç°Ä¿Â¼×ÖÌå¼ÓÔØ³É¹¦" << std::endl;
+    // 1. åŠ è½½å­—ä½“
+    if (!gameFont.openFromFile("simhei.ttf")) {
+        if (!gameFont.openFromFile("C:/Windows/Fonts/simhei.ttf")) {
+            std::cerr << "é”™è¯¯ï¼šæ— æ³•åŠ è½½å­—ä½“æ–‡ä»¶ï¼" << std::endl;
+            fontLoaded = false;
+        }
+        else {
+            fontLoaded = true;
+        }
     }
-    // ³¢ÊÔ±¸Ñ¡Â·¾¶£¨×ÀÃæÂ·¾¶£©
-    else if (font.openFromFile("C:/Windows/Fonts/simhei.ttf")) {
-        fontLoaded = true;
-        std::cout << "×ÀÃæÂ·¾¶×ÖÌå¼ÓÔØ³É¹¦" << std::endl;
-    }
-    // ÈôÈÔÊ§°Ü£¬ÌáÊ¾´íÎó£¨¿É¿¼ÂÇ½øÒ»²½»ØÍËµ½ÏµÍ³×ÖÌå£©
     else {
-        std::cerr << "¾¯¸æ£ºËùÓĞ×ÖÌåÂ·¾¶¼ÓÔØÊ§°Ü£¡ÎÄ×Ö¿ÉÄÜÎŞ·¨ÏÔÊ¾" << std::endl;
-        // ¿ÉÑ¡£º³¢ÊÔÏµÍ³×ÖÌå£¨Èç Arial£©
-        // if (font.openFromFile("C:/Windows/Fonts/arial.ttf")) {
-        //     fontLoaded = true;
-        //     std::cout << "ÏµÍ³×ÖÌå¼ÓÔØ³É¹¦" << std::endl;
-        // }
+        fontLoaded = true;
     }
 
-    // 2. ³õÊ¼»¯ÎÄ±¾¶ÔÏó£¨Ê¹ÓÃ³ÉÔ±±äÁ¿ statusText£¬¶ø·Ç¾Ö²¿±äÁ¿£©
+    // 2. åˆå§‹åŒ–æ–‡æœ¬å¯¹è±¡
     if (fontLoaded) {
-        statusText.setCharacterSize(30);         // ×ÖÌå´óĞ¡
-        statusText.setFillColor(sf::Color::Red); // ÎÄ×ÖÑÕÉ«
-        statusText.setPosition({ 50.0f, 10.0f });  // Î»ÖÃ£¨´°¿Ú×óÉÏ½ÇÆ«ÒÆ£©
-        
-    }
-    else {
-        // ×ÖÌå¼ÓÔØÊ§°ÜÊ±£¬ÖÁÉÙ±£Ö¤³ÌĞò²»±ÀÀ££¨¿ÉÉèÖÃÄ¬ÈÏÎÄ±¾£¬µ«¿ÉÄÜÏÔÊ¾ÂÒÂë£©
-        statusText.setString("×ÖÌå¼ÓÔØÊ§°Ü");
+        initTextObjects();
     }
 
-    // 3. ÖØÖÃÓÎÏ·×´Ì¬£¨³õÊ¼»¯ÆåÅÌ¡¢Íæ¼ÒµÈ£©
+    // 3. åˆå§‹åŒ–æŒ‰é’®èƒŒæ™¯
+    buttonBg.setSize(sf::Vector2f(300, 200));
+    buttonBg.setFillColor(sf::Color(255, 255, 255, 200));
+    buttonBg.setPosition(
+        { static_cast<float>((BOARD_SIZE * CELL_SIZE + 2 * WINDOW_MARGIN - 300) / 2),
+        150.0f }
+    );
+
+    infoBg.setSize(sf::Vector2f(500, 300));
+    infoBg.setFillColor(sf::Color(255, 255, 255, 220));
+    infoBg.setPosition(
+        { static_cast<float>((BOARD_SIZE * CELL_SIZE + 2 * WINDOW_MARGIN - 500) / 2),
+        100.0f }
+    );
+
+    // 4. åˆå§‹åŒ–æ£‹ç›˜
     resetGame();
+    // åŠ è½½éŸ³ä¹ï¼ˆæ”¾åœ¨å…¶ä»–èµ„æºåŠ è½½ä¹‹åï¼‰
+    if (loadMusic()) {
+        bgMusic.play();  // å¦‚æœåŠ è½½æˆåŠŸç«‹å³æ’­æ”¾
+    }
+}
+
+// Game.cpp
+bool Game::loadMusic() {
+    if (!bgMusic.openFromFile("resources/music.ogg")) {  // æ¨èä½¿ç”¨OGGæ ¼å¼
+        std::cerr << "æ— æ³•åŠ è½½èƒŒæ™¯éŸ³ä¹æ–‡ä»¶ï¼" << std::endl;
+        return false;
+    }
+    //bgMusic.setLoop(true);      // è®¾ç½®å¾ªç¯æ’­æ”¾
+    bgMusic.setVolume(30.f);    // éŸ³é‡è®¾ç½®(0-100)
+    return true;
+}
+
+void Game::initTextObjects() {
+    // çŠ¶æ€æ–‡æœ¬
+    statusText.setFont(gameFont);
+    statusText.setCharacterSize(30);
+    statusText.setFillColor(sf::Color::Red);
+    statusText.setPosition({ 50.f, 10.f });
+
+    // æ ‡é¢˜æ–‡æœ¬
+    titleText.setFont(gameFont);
+    titleText.setString(L"äº”å­æ£‹");
+    titleText.setCharacterSize(60);
+    titleText.setFillColor(sf::Color::Black);
+    titleText.setPosition(
+        { static_cast<float>((BOARD_SIZE * CELL_SIZE + 2 * WINDOW_MARGIN - titleText.getLocalBounds().size.x) / 2),
+        50.0f }
+    );
+    // å¼€å§‹æŒ‰é’®æ–‡æœ¬
+    startText.setFont(gameFont);
+    startText.setString(L"å¼€å§‹æ¸¸æˆ");
+    startText.setCharacterSize(30);
+    startText.setFillColor(sf::Color::Black);
+    startText.setPosition(
+        { static_cast<float> ((BOARD_SIZE * CELL_SIZE + 2 * WINDOW_MARGIN - startText.getLocalBounds().size.x) / 2),
+        180.0f }
+    );
+
+    // é€€å‡ºæŒ‰é’®æ–‡æœ¬
+    exitText.setFont(gameFont);
+    exitText.setString(L"é€€å‡ºæ¸¸æˆ");
+    exitText.setCharacterSize(30);
+    exitText.setFillColor(sf::Color::Black);
+    exitText.setPosition(
+        { static_cast<float>((BOARD_SIZE * CELL_SIZE + 2 * WINDOW_MARGIN - exitText.getLocalBounds().size.x) / 2),
+        230.0f }
+    );
+
+    // ä»‹ç»æŒ‰é’®æ–‡æœ¬
+    infoText.setFont(gameFont);
+    infoText.setString(L"æ¸¸æˆä»‹ç»");
+    infoText.setCharacterSize(30);
+    infoText.setFillColor(sf::Color::Black);
+    infoText.setPosition(
+        { static_cast<float>((BOARD_SIZE * CELL_SIZE + 2 * WINDOW_MARGIN - infoText.getLocalBounds().size.x) / 2),
+        280.0f }
+    );
+
+    // ä»‹ç»å†…å®¹æ–‡æœ¬
+    infoContentText.setFont(gameFont);
+    infoContentText.setString(
+        L"æ¸¸æˆè§„åˆ™:\n"
+        L"1. é»‘ç™½åŒæ–¹è½®æµè½å­\n"
+        L"2. å…ˆåœ¨æ¨ªã€ç«–ã€æ–œæ–¹å‘è¿æˆäº”å­è€…èƒœ\n"
+        L"3. æŒ‰Ré”®å¯ä»¥é‡æ–°å¼€å§‹\n\n"
+        L"æ“ä½œè¯´æ˜:\n"
+        L"â€¢ é¼ æ ‡ç‚¹å‡»æ”¾ç½®æ£‹å­\n"
+        L"â€¢ æ¸¸æˆç»“æŸåæŒ‰Ré‡æ–°å¼€å§‹"
+    );
+    infoContentText.setCharacterSize(24);
+    infoContentText.setFillColor(sf::Color::Black);
+    infoContentText.setPosition(
+        { static_cast<float>((BOARD_SIZE * CELL_SIZE + 2 * WINDOW_MARGIN - 450) / 2),
+        120.0f }
+    );
 }
 
 void Game::run() {
     while (window.isOpen()) {
-        //window.draw(statusText);
         processEvents();
         update();
         render();
@@ -70,56 +142,109 @@ void Game::run() {
 }
 
 void Game::processEvents() {
+    //sf::Event event;
     for (auto event = window.pollEvent(); event; event = window.pollEvent()) {
         if (event->is<sf::Event::Closed>()) {
             window.close();
         }
-        else if (!gameOver && event->is<sf::Event::MouseButtonPressed>() &&
-            sf::Mouse::isButtonPressed(sf::Mouse::Button::Left))
-        {
-            const auto mousePos = sf::Mouse::getPosition(window);
-            handleClick(mousePos.x, mousePos.y);//´¦Àíµã»÷
+        if (gameOver && sf::Keyboard::isKeyPressed(sf::Keyboard::Scan::M)) {
+            if (isMusicPaused) {
+                bgMusic.play();  // ä»æš‚åœä½ç½®ç»§ç»­
+            }
+            else {
+                bgMusic.pause(); // æš‚åœéŸ³ä¹
+            }
+            isMusicPaused = !isMusicPaused; // åˆ‡æ¢çŠ¶æ€
         }
-        else if (gameOver && sf::Keyboard::isKeyPressed(sf::Keyboard::Scan::R)) {
-            resetGame();//ÓÎÏ·½áÊøÖØĞÂ¿ªÊ¼
+        if (!gameOver && event->is<sf::Event::MouseButtonPressed>() &&
+            sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
+            sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+
+            if (currentState == GameState::MainMenu) {
+                if (showingInfo) {
+                    showingInfo = false;
+                }
+                else {
+                    if (startText.getGlobalBounds().contains({ static_cast<float>( mousePos.x), static_cast<float>(mousePos.y) })) {
+                        currentState = GameState::Playing;
+                    }
+                    else if (exitText.getGlobalBounds().contains({ static_cast<float>(mousePos.x), static_cast<float>(mousePos.y )})) {
+                        window.close();
+                    }
+                    else if (infoText.getGlobalBounds().contains({ static_cast<float>(mousePos.x), static_cast<float>(mousePos.y) })) {
+                        showingInfo = true;
+                    }
+                }
+            }
+            else if (currentState == GameState::Playing && !gameOver) {
+                handleClick(mousePos.x, mousePos.y);
+            }
+        }
+
+        if (gameOver && sf::Keyboard::isKeyPressed(sf::Keyboard::Scan::R)) {
+            resetGame();
         }
     }
 }
 
 void Game::update() {
-    // Ö»ÔÚÓÎÏ·½øĞĞÖĞ¸üĞÂ»ØºÏÎÄ±¾
-    if (!gameOver && currentPlayer != 0) {  // Ìí¼ÓcurrentPlayer¼ì²é
-        statusText.setString(currentPlayer == 1 ? L"ºÚ·½»ØºÏ" : L"°×·½»ØºÏ");
+    if (currentState == GameState::Playing && !gameOver && fontLoaded) {
+        statusText.setString(currentPlayer == 1 ? L"é»‘æ–¹å›åˆ" : L"ç™½æ–¹å›åˆ");
     }
-    // ÓÎÏ·½áÊø»ò³õÊ¼×´Ì¬±£³ÖÔ­ÎÄ±¾²»±ä
 }
-//äÖÈ¾ÓÎÏ·
-void Game::render() {
-    //window.draw(statusText);
-    //window.display();
-    window.clear(sf::Color(238, 238, 210)); // Ç³»ÆÉ«±³¾°
 
-    // »æÖÆÆåÅÌÍø¸ñ
+void Game::render() {
+    window.clear(sf::Color(238, 238, 210));
+
+    // ç»˜åˆ¶æ£‹ç›˜èƒŒæ™¯
+    drawChessboard();
+
+    if (currentState == GameState::MainMenu) {
+        window.draw(buttonBg);
+        window.draw(titleText);
+        window.draw(startText);
+        window.draw(exitText);
+        window.draw(infoText);
+
+        if (showingInfo) {
+            window.draw(infoBg);
+            window.draw(infoContentText);
+        }
+    }
+    else {
+        drawPieces();
+        if (fontLoaded) {
+            window.draw(statusText);
+        }
+    }
+
+    window.display();
+}
+
+void Game::drawChessboard() {
     for (int i = 0; i < BOARD_SIZE; ++i) {
         for (int j = 0; j < BOARD_SIZE; ++j) {
             sf::RectangleShape cell(sf::Vector2f(CELL_SIZE - 2, CELL_SIZE - 2));
-            cell.setPosition({static_cast<float>(WINDOW_MARGIN + j * CELL_SIZE), static_cast<float>(WINDOW_MARGIN + i * CELL_SIZE)
-        });
+            cell.setPosition(
+                { static_cast<float>(WINDOW_MARGIN + j * CELL_SIZE),
+                static_cast<float>(WINDOW_MARGIN + i * CELL_SIZE) }
+            );
             cell.setOutlineThickness(1);
             cell.setOutlineColor(sf::Color::Black);
             cell.setFillColor(sf::Color::Transparent);
             window.draw(cell);
         }
     }
+}
 
-    // »æÖÆÆå×Ó
+void Game::drawPieces() {
     for (int i = 0; i < BOARD_SIZE; ++i) {
         for (int j = 0; j < BOARD_SIZE; ++j) {
             if (board[i][j] == 1) {
                 sf::CircleShape piece(PIECE_RADIUS);
                 piece.setPosition(
-                    { static_cast<float>(WINDOW_MARGIN + j * CELL_SIZE - PIECE_RADIUS),static_cast<float>
-                   ( WINDOW_MARGIN + i * CELL_SIZE - PIECE_RADIUS )}
+                    { static_cast<float>(WINDOW_MARGIN + j * CELL_SIZE - PIECE_RADIUS),
+                    static_cast<float>(WINDOW_MARGIN + i * CELL_SIZE - PIECE_RADIUS)}
                 );
                 piece.setFillColor(sf::Color::Black);
                 window.draw(piece);
@@ -137,51 +262,33 @@ void Game::render() {
             }
         }
     }
-
-    // »æÖÆ×´Ì¬ÎÄ±¾
-    if (gameOver) {
-        statusText.setString(winner == 1 ? L"ºÚ·½Ê¤Àû£¡°´RÖØĞÂ¿ªÊ¼" : L"°×·½Ê¤Àû£¡°´RÖØĞÂ¿ªÊ¼");
-    }
-    window.draw(statusText);
-
-    window.display();
 }
 
 void Game::handleClick(int x, int y) {
-    // ×ª»»ÎªÆåÅÌ×ø±ê
     int col = (x - WINDOW_MARGIN + CELL_SIZE / 2) / CELL_SIZE;
     int row = (y - WINDOW_MARGIN + CELL_SIZE / 2) / CELL_SIZE;
 
-    // ¼ì²é±ß½ç
-    if (row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE) {
+    if (row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE || board[row][col] != 0) {
         return;
     }
 
-    // ¼ì²éÎ»ÖÃÊÇ·ñÎª¿Õ
-    if (board[row][col] != 0) {
-        return;
-    }
-
-    // ·ÅÖÃÆå×Ó
     board[row][col] = currentPlayer;
 
-    // ¼ì²éÊ¤Àû
     if (checkWin(row, col, currentPlayer)) {
         gameOver = true;
         winner = currentPlayer;
+        if (fontLoaded) {
+            statusText.setString(winner == 1 ? L"é»‘æ–¹èƒœåˆ©ï¼æŒ‰Ré‡æ–°å¼€å§‹" : L"ç™½æ–¹èƒœåˆ©ï¼æŒ‰Ré‡æ–°å¼€å§‹");
+        }
     }
     else {
-        // ÇĞ»»Íæ¼Ò
         currentPlayer = 3 - currentPlayer;
     }
 }
 
 bool Game::checkWin(int row, int col, int player) {
-    constexpr std::array<std::pair<int, int>, 4> directions = {
-        std::make_pair(1, 0),   // ºáÏò
-        std::make_pair(0, 1),   // ×İÏò
-        std::make_pair(1, 1),   // Ğ±Ïò ¨K
-        std::make_pair(1, -1)   // Ğ±Ïò ¨L
+    const std::pair<int, int> directions[] = {
+        {1, 0}, {0, 1}, {1, 1}, {1, -1}
     };
 
     for (const auto& [dr, dc] : directions) {
@@ -207,12 +314,13 @@ int Game::countDirection(int row, int col, int player, int dr, int dc) {
 }
 
 void Game::resetGame() {
-    // Çå¿ÕÆåÅÌ
     for (auto& row : board) {
         row.fill(0);
     }
     currentPlayer = 1;
     gameOver = false;
     winner = 0;
-    statusText.setString(L"ºÚ·½ÏÈÊÖ");
+    if (fontLoaded) {
+        statusText.setString(L"é»‘æ–¹å…ˆæ‰‹");
+    }
 }
