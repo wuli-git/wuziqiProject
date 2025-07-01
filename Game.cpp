@@ -23,7 +23,7 @@ Game::Game() :
         }
         else {
             fontLoaded = true;
-        }   
+        }
     }
     else {
         fontLoaded = true;
@@ -49,6 +49,14 @@ Game::Game() :
         100.0f }
     );
 
+    huiqiBg.setSize(sf::Vector2f(120, 40));
+    huiqiBg.setFillColor(sf::Color(200, 200, 200, 200));
+    huiqiBg.setPosition(
+        { static_cast<float>(BOARD_SIZE * CELL_SIZE + 2 * WINDOW_MARGIN - 120 - 20),
+        static_cast<float>(10) }
+    );
+
+    
     // 4. 初始化棋盘
     resetGame();
     // 加载音乐（放在其他资源加载之后）
@@ -119,11 +127,13 @@ void Game::initTextObjects() {
     infoContentText.setString(
         L"游戏规则:\n"
         L"1. 黑白双方轮流落子\n"
-        L"2. 先在横、竖、斜方向连成五子者胜\n"
-        L"3. 按R键可以重新开始\n\n"
+        L"2. 先在横、竖、斜方向连成五子者胜\n\n"
+        
         L"操作说明:\n"
         L"• 鼠标点击放置棋子\n"
         L"• 游戏结束后按R重新开始"
+        L". 按R键可以重新开始\n"
+        L". 按M键可以关闭背景音乐"
     );
     infoContentText.setCharacterSize(24);
     infoContentText.setFillColor(sf::Color::Black);
@@ -131,6 +141,15 @@ void Game::initTextObjects() {
         { static_cast<float>((BOARD_SIZE * CELL_SIZE + 2 * WINDOW_MARGIN - 450) / 2),
         120.0f }
     );
+    // 悔棋按钮文本
+    huiqiText.setFont(gameFont);
+    huiqiText.setString(L"悔棋 (U)");
+    huiqiText.setCharacterSize(24);
+    huiqiText.setFillColor(sf::Color::Black);
+    huiqiText.setPosition(
+        { static_cast<float>(BOARD_SIZE * CELL_SIZE + 2 * WINDOW_MARGIN - 120 - 20),
+        static_cast<float>(10) });
+
 }
 
 void Game::run() {
@@ -180,7 +199,26 @@ void Game::processEvents() {
                 handleClick(mousePos.x, mousePos.y);
             }
         }
-
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scan::U)) {
+            if (canUndo) {
+                undoMove();
+            }
+        }
+        //sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+        //if (huiqiBg.getGlobalBounds().contains({ static_cast<float>(mousePos.x), static_cast<float>(mousePos.y) })) {
+        //    huiqiBg.setFillColor(sf::Color(180, 180, 180, 220)); // 悬停时变深
+        //}
+        //else {
+        //    huiqiBg.setFillColor(sf::Color(200, 200, 200, 200)); // 恢复正常
+        //}
+        // 鼠标点击悔棋按钮
+        if (!gameOver && event->is<sf::Event::MouseButtonPressed>() &&
+            sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
+            sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+            if (huiqiBg.getGlobalBounds().contains({ static_cast<float>(mousePos.x), static_cast<float>(mousePos.y) }) && canUndo) {
+                undoMove();
+            }
+        }
         if (gameOver && sf::Keyboard::isKeyPressed(sf::Keyboard::Scan::R)) {
             resetGame();
         }
@@ -217,7 +255,21 @@ void Game::render() {
             window.draw(statusText);
         }
     }
+    if (currentState == GameState::Playing) {
+        // 绘制悔棋按钮
+        window.draw(huiqiBg);
+        window.draw(huiqiText);
 
+        // 根据可悔棋状态调整颜色
+        if (!canUndo) {
+            huiqiBg.setFillColor(sf::Color(150, 150, 150, 150));
+            huiqiText.setFillColor(sf::Color(100, 100, 100));
+        }
+        else {
+            huiqiBg.setFillColor(sf::Color(200, 200, 200, 200));
+            huiqiText.setFillColor(sf::Color::Black);
+        }
+    }
     window.display();
 }
 
@@ -273,7 +325,13 @@ void Game::handleClick(int x, int y) {
     }
 
     board[row][col] = currentPlayer;
-
+    
+    if (board[row][col] != 0)
+        {
+            // 记录落子位置
+            moveHistory.emplace_back(row, col);
+            canUndo = true;
+        }
     if (checkWin(row, col, currentPlayer)) {
         gameOver = true;
         winner = currentPlayer;
@@ -323,4 +381,20 @@ void Game::resetGame() {
     if (fontLoaded) {
         statusText.setString(L"黑方先手");
     }
+    moveHistory.clear();
+    canUndo = false;
+}
+
+void Game::undoMove() {
+    if (moveHistory.empty()) {
+        canUndo = false;
+        return;
+    }
+
+    auto [row, col] = moveHistory.back();
+    moveHistory.pop_back();
+
+    board[row][col] = 0;            // 清空该位置
+    currentPlayer = 3 - currentPlayer; // 切换回上一个玩家
+    canUndo = !moveHistory.empty();  // 检查是否还能继续悔棋
 }

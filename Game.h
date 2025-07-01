@@ -39,16 +39,23 @@ private:
     sf::Text exitText{ gameFont };
     sf::Text infoText{ gameFont };
     sf::Text infoContentText{ gameFont };
+    sf::Text huiqiText{ gameFont };
     bool showingInfo = false;
 
     // 按钮背景
     sf::RectangleShape buttonBg;
     sf::RectangleShape infoBg;
+    sf::RectangleShape huiqiBg;
+
+    //悔棋模块
+    std::vector<std::pair<int, int>> moveHistory; // 落子历史记录,记录的是位置
+    bool canUndo = false;            // 是否可以悔棋
 
     //背景音乐
     sf::Music bgMusic;  // 背景音乐对象
     bool loadMusic();   // 音乐加载方法
     bool isMusicPaused = false;
+    //sf::Music 
 
     // 私有方法
     void initTextObjects();
@@ -61,6 +68,7 @@ private:
     bool checkWin(int row, int col, int player);
     int countDirection(int row, int col, int player, int dr, int dc);
     void resetGame();
+    void undoMove();//悔棋函数
 };
 
 #endif // GAME_H
