@@ -63,6 +63,10 @@ Game::Game() :
     if (loadMusic()) {
         bgMusic.play();  // 如果加载成功立即播放
     }
+    if (!loadPlaceSound()) {
+        std::cerr << "加载落子音效成功！" << std::endl;
+    }
+
 }
 
 // Game.cpp
@@ -75,6 +79,22 @@ bool Game::loadMusic() {
     bgMusic.setVolume(30.f);    // 音量设置(0-100)
     return true;
 }
+
+bool Game::loadPlaceSound() {
+    if (!placeSound.loadFromFile("落子音效.ogg")) {
+        if (!placeSound.loadFromFile("D:/desktop 2/落子音效.ogg")) {
+            std::cerr << "无法加载落子音效文件！" << std::endl;
+            return false;
+        }
+        else {
+            std::cerr << "加载成功" << std::endl;
+        }
+        PlaceSound.setBuffer(placeSound);
+        PlaceSound.setVolume(30.f);
+        return true;
+    }
+}
+
 
 void Game::initTextObjects() {
     // 状态文本
@@ -162,6 +182,25 @@ void Game::run() {
 
 void Game::processEvents() {
     //sf::Event event;
+    sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+
+    // s
+    if (huiqiBg.getGlobalBounds().contains({ static_cast<float>(mousePos.x), static_cast<float>(mousePos.y) })) {
+        // 鼠标在上面悬停，不管是否能悔棋
+        huiqiBg.setFillColor(sf::Color(180, 180, 180, 220));
+    }
+    else {
+        // 鼠标不在上面
+        if (canUndo) {
+            // 能悔棋
+            huiqiBg.setFillColor(sf::Color(200, 200, 200, 200));
+        }
+        else {
+            // 不能悔棋，颜色最浅
+            huiqiBg.setFillColor(sf::Color(220, 220, 220, 180));
+        }
+    }
+
     for (auto event = window.pollEvent(); event; event = window.pollEvent()) {
         if (event->is<sf::Event::Closed>()) {
             window.close();
@@ -177,6 +216,7 @@ void Game::processEvents() {
         }
         if (!gameOver && event->is<sf::Event::MouseButtonPressed>() &&
             sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
+            PlaceSound.play();
             sf::Vector2i mousePos = sf::Mouse::getPosition(window);
 
             if (currentState == GameState::MainMenu) {

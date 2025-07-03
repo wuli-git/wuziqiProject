@@ -4,6 +4,18 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp> 
 #include <array>
+enum class Difficulty {
+    Easy,   // 简单：搜索深度1
+    Medium, // 中等：搜索深度3
+    Hard    // 困难：搜索深度5
+};
+
+// 棋型评分（分数越高优先级越高）
+const int SCORE_FIVE = 100000;    // 五连
+const int SCORE_FOUR = 10000;     // 活四/冲四
+const int SCORE_THREE = 1000;     // 活三/冲三
+const int SCORE_TWO = 100;        // 活二/冲二
+const int SCORE_ONE = 10;         // 活一/冲一
 
 class Game {
 public:
@@ -55,8 +67,16 @@ private:
     sf::Music bgMusic;  // 背景音乐对象
     bool loadMusic();   // 音乐加载方法
     bool isMusicPaused = false;
+    bool loadPlaceSound();
+    sf::SoundBuffer placeSound;
+    sf::Sound PlaceSound{ placeSound };
     //sf::Music 
 
+    //AI部分
+    Difficulty currentDifficulty;  // 当前难度
+    bool isAIThinking;             // AI思考中标记
+    sf::Text thinkingText{gameFont};         // "思考中"提示文本
+    
     // 私有方法
     void initTextObjects();
     void processEvents();
