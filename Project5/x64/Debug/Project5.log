@@ -1,0 +1,10 @@
+﻿  Game.cpp
+D:\SFML\SFML-3.0.0\include\SFML\System\Exception.hpp(41,47): warning C4275: 非 dll 接口 class“std::runtime_error”用作 dll 接口 class“sf::Exception”的基
+  (编译源文件“../../../desktop%202/wuziqiProject-master/Game.cpp”)
+      D:\visual studio\vs IDE\VC\Tools\MSVC\14.41.34120\include\stdexcept(100,19):
+      参见“std::runtime_error”的声明
+      D:\SFML\SFML-3.0.0\include\SFML\System\Exception.hpp(41,23):
+      参见“sf::Exception”的声明
+  
+D:\desktop 2\wuziqiProject-master\Game.cpp(96,1): warning C4715: “Game::loadPlaceSound”: 不是所有的控件路径都返回值
+  Project5.vcxproj -> D:\visual studio\vs 项目\Project5\x64\Debug\Project5.exe
