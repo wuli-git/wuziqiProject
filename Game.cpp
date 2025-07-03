@@ -66,7 +66,9 @@ Game::Game() :
     if (!loadPlaceSound()) {
         std::cerr << "加载落子音效成功！" << std::endl;
     }
-
+    if (!loadVictorySound()) {
+        std::cerr << "加载胜利音效失败" << std::endl;
+    }
 }
 
 // Game.cpp
@@ -94,7 +96,25 @@ bool Game::loadPlaceSound() {
         return true;
     }
 }
+bool Game::loadVictorySound() {
+    // 缁熶竴鍙橀噺鍛藉悕锛屼娇鐢?victorySound 鍜?victorySoundBuffer
+    if (!VictorySoundBuffer.loadFromFile("胜利音效.ogg")) {
+        if (!VictorySoundBuffer.loadFromFile("胜利音效.ogg")) {
+            std::cerr << "加载失败 "<< std::endl;
+                return false;
+        }
+        else {
+            std::cerr << "加载成功从电脑" << std::endl;
+            VictorySound.setBuffer(VictorySoundBuffer);
+        }
+    }
+    else {
+        std::cerr << "从项目加载成功" << std::endl;
+    }
 
+    VictorySound.setVolume(30.f);
+    return true;
+}
 
 void Game::initTextObjects() {
     // 状态文本
@@ -375,6 +395,7 @@ void Game::handleClick(int x, int y) {
     if (checkWin(row, col, currentPlayer)) {
         gameOver = true;
         winner = currentPlayer;
+        VictorySound.play();
         if (fontLoaded) {
             statusText.setString(winner == 1 ? L"黑方胜利！按R重新开始" : L"白方胜利！按R重新开始");
         }

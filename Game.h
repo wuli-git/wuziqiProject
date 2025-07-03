@@ -71,6 +71,9 @@ private:
     sf::SoundBuffer placeSound;
     sf::Sound PlaceSound{ placeSound };
     //sf::Music 
+    sf::SoundBuffer VictorySoundBuffer;
+    sf::Sound VictorySound{ VictorySoundBuffer };
+    bool loadVictorySound();
 
     //AI部分
     Difficulty currentDifficulty;  // 当前难度
